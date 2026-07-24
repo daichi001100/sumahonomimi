@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0f4c81">
+<title>スマホの耳👂　会話を文字に</title>
+<style>
+  :root{
+    --fs: 30px;               /* 履歴の基本文字サイズ（調整可） */
+    --bg: #f7f4ec;
+    --card: #ffffff;
+    --ink: #16202b;
+    --ink-soft: #55606c;
+    --line: #e4ddce;
+    --brand: #0f4c81;
+    --brand-2: #1c7c9c;
+    --accent: #e8790a;
+    --good: #1f8a4c;
+    --q: #b23a48;
+    --live-bg: #fffdf6;
+    --shadow: 0 6px 22px rgba(20,40,60,.10);
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family: -apple-system, "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic UI", "Noto Sans JP", sans-serif;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom: 40px;
+  }
+  .wrap{ max-width: 760px; margin: 0 auto; padding: 0 14px; }
+
+  /* ---- ヘッダー ---- */
+  header{
+    position:sticky; top:0; z-index:50;
+    background: linear-gradient(180deg, var(--brand), var(--brand-2));
+    color:#fff;
+    box-shadow: var(--shadow);
+  }
+  .head-in{ max-width:760px; margin:0 auto; padding:12px 14px; display:flex; align-items:center; gap:10px; }
+  .head-in h1{ font-size:1.35rem; margin:0; font-weight:800; letter-spacing:.02em; line-height:1.15; }
+  .head-in h1 small{ display:block; font-size:.72rem; font-weight:600; opacity:.9; letter-spacing:.06em; }
+  .head-actions{ margin-left:auto; display:flex; align-items:center; gap:7px; }
+  .hbtn{
+    border:none; background:rgba(255,255,255,.18); color:#fff; font-family:inherit;
+    font-size:1.05rem; font-weight:800; border-radius:12px; padding:9px 12px; cursor:pointer;
+    display:inline-flex; align-items:center; gap:5px; white-space:nowrap; line-height:1;
+  }
+  .hbtn:active{ background:rgba(255,255,255,.34); }
+  .hbtn .lbl{ font-size:.78rem; }
+  .hbtn.linked{ background:#fff; color:var(--good); }
+  .head-status{ font-size:.78rem; font-weight:700; padding:5px 11px; border-radius:999px; background:rgba(255,255,255,.16); white-space:nowrap; }
+  .head-status.on{ background:#fff; color:var(--good); }
+  .dot{ display:inline-block; width:9px; height:9px; border-radius:50%; background:#c9d4de; margin-right:6px; vertical-align:middle; }
+  .head-status.on .dot{ background:var(--good); animation:pulse 1.2s infinite; }
+  @keyframes pulse{ 0%{transform:scale(.8);opacity:.6} 50%{transform:scale(1.3);opacity:1} 100%{transform:scale(.8);opacity:.6} }
+
+  /* ---- 大きな開始ボタン ---- */
+  .mic-area{ text-align:center; padding:18px 0 6px; }
+  .mic-btn{
+    width:100%; max-width:520px; border:none; cursor:pointer;
+    font-family:inherit; font-weight:800; color:#fff;
+    background: linear-gradient(180deg,#2aa458,#1f8a4c);
+    border-radius:20px; padding:22px 18px; font-size:1.7rem;
+    box-shadow: 0 8px 20px rgba(31,138,76,.35);
+    display:inline-flex; align-items:center; justify-content:center; gap:12px;
+    transition: transform .08s ease, filter .15s ease;
+  }
+  .mic-btn:active{ transform: scale(.98); }
+  .mic-btn .ico{ font-size:2rem; }
+  .mic-btn.listening{ background: linear-gradient(180deg,#c94040,#b23a48); box-shadow:0 8px 20px rgba(178,58,72,.4); }
+
+  /* ---- ライブ表示 ---- */
+  .live{
+    margin:14px 0 4px; background:var(--live-bg); border:2px dashed var(--brand-2);
+    border-radius:18px; padding:18px; min-height:96px;
+    display:flex; align-items:center; justify-content:center; text-align:center;
+  }
+  .live .live-text{ font-size: calc(var(--fs) + 8px); font-weight:800; color:var(--brand); word-break:break-word; }
+  .live .live-hint{ color:var(--ink-soft); font-size:1rem; font-weight:600; }
+  .live.speaking{ border-style:solid; background:#fff; }
+
+  /* ---- 設定バー ---- */
+  .controls{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:14px 0 8px; }
+  .ctl{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:8px 12px; display:flex; align-items:center; gap:8px; box-shadow:var(--shadow); }
+  .ctl label{ font-size:.85rem; font-weight:700; color:var(--ink-soft); }
+  .fs-btn{ border:none; background:var(--brand); color:#fff; width:40px; height:40px; border-radius:10px; font-size:1.3rem; font-weight:800; cursor:pointer; }
+  .fs-btn:active{ filter:brightness(1.1); }
+  select{
+    font-family:inherit; font-size:1rem; font-weight:700; color:var(--ink);
+    border:1px solid var(--line); border-radius:10px; padding:8px 10px; background:#fff;
+  }
+  .switch{ display:inline-flex; align-items:center; gap:8px; cursor:pointer; font-size:.85rem; font-weight:700; color:var(--ink-soft); }
+  .switch input{ width:20px; height:20px; accent-color:var(--brand); }
+
+  .section-title{ display:flex; align-items:center; gap:10px; margin:20px 4px 8px; }
+  .section-title h2{ font-size:1.05rem; margin:0; color:var(--ink-soft); font-weight:800; letter-spacing:.03em; }
+  .section-title .clear{ margin-left:auto; border:1px solid var(--line); background:#fff; color:var(--q); font-weight:700; border-radius:10px; padding:7px 12px; font-size:.82rem; cursor:pointer; }
+
+  /* ---- 履歴カード ---- */
+  #history{ display:flex; flex-direction:column; gap:14px; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:16px 18px; box-shadow:var(--shadow); animation: pop .25s ease; }
+  @keyframes pop{ from{ transform:translateY(-8px); opacity:0 } to{ transform:none; opacity:1 } }
+  .card .said{ font-size: var(--fs); font-weight:800; color:var(--ink); word-break:break-word; line-height:1.45; }
+  .card.q{ border-left:8px solid var(--q); }
+  .card.q .said{ color:var(--q); }
+  .qflag{ display:inline-block; font-size:.7em; vertical-align:middle; background:var(--q); color:#fff; font-weight:800; border-radius:8px; padding:2px 9px; margin-left:8px; }
+  .meta-row{ display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; margin-top:10px; }
+  .chip{ font-size:.82rem; font-weight:700; color:var(--ink-soft); background:#f1ede2; border-radius:999px; padding:5px 11px; }
+  .chip b{ color:var(--brand); }
+  .translated{ margin-top:12px; padding:12px 14px; background:#eef6f9; border-radius:12px; }
+  .translated .tl-lang{ font-size:.75rem; font-weight:800; color:var(--brand-2); letter-spacing:.05em; }
+  .translated .tl-text{ font-size: calc(var(--fs) - 4px); font-weight:700; color:#0d3a4d; word-break:break-word; margin-top:3px; }
+  .intent{ margin-top:12px; font-size:.95rem; color:var(--ink-soft); }
+  .intent b{ color:var(--accent); }
+  .replies{ margin-top:10px; display:flex; flex-wrap:wrap; gap:8px; }
+  .reply-btn{ border:1.5px solid var(--brand); background:#fff; color:var(--brand); font-family:inherit; font-weight:800; font-size:1rem; border-radius:12px; padding:9px 14px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
+  .reply-btn:active{ background:var(--brand); color:#fff; }
+  .card .foot{ display:flex; align-items:center; gap:12px; margin-top:12px; }
+  .card .time{ font-size:.78rem; color:#9aa4ae; font-weight:600; }
+  .mini{ margin-left:auto; display:flex; gap:8px; }
+  .mini button{ border:1px solid var(--line); background:#fff; border-radius:10px; padding:6px 10px; font-size:.8rem; font-weight:700; color:var(--ink-soft); cursor:pointer; }
+
+  .empty{ text-align:center; color:var(--ink-soft); padding:34px 10px; font-weight:600; }
+  .empty .big{ font-size:2.4rem; margin-bottom:8px; }
+
+  /* ---- 話し手の名前バッジ ---- */
+  .who{ display:inline-flex; align-items:center; gap:6px; font-size:.95rem; font-weight:800;
+        color:#fff; background:var(--brand-2); border-radius:999px; padding:4px 13px; margin-bottom:9px; }
+  .who.me{ background:#7c8794; }
+  .card.remote{ background:#f4faff; border-color:#c9e2f0; }
+
+  /* ---- モーダル（使い方 / グループ） ---- */
+  .overlay{ position:fixed; inset:0; background:rgba(16,28,40,.55); z-index:100;
+            display:none; align-items:flex-start; justify-content:center; padding:16px; overflow-y:auto; }
+  .overlay.open{ display:flex; }
+  .modal{ background:var(--card); border-radius:22px; width:100%; max-width:560px; margin:auto;
+          box-shadow:0 20px 60px rgba(0,0,0,.3); overflow:hidden; }
+  .modal-head{ background:linear-gradient(180deg,var(--brand),var(--brand-2)); color:#fff;
+               padding:16px 18px; display:flex; align-items:center; gap:10px; }
+  .modal-head h3{ margin:0; font-size:1.25rem; font-weight:800; }
+  .modal-head .x{ margin-left:auto; border:none; background:rgba(255,255,255,.22); color:#fff;
+                  width:40px; height:40px; border-radius:12px; font-size:1.3rem; font-weight:800; cursor:pointer; }
+  .modal-body{ padding:18px; }
+  .modal-body h4{ margin:18px 0 8px; font-size:1rem; color:var(--brand); }
+  .modal-body h4:first-child{ margin-top:0; }
+
+  /* 使い方ガイド */
+  .steps{ list-style:none; margin:0; padding:0; counter-reset:st; }
+  .steps li{ counter-increment:st; position:relative; padding:12px 0 12px 48px; border-bottom:1px solid var(--line); font-size:1.05rem; line-height:1.6; }
+  .steps li:last-child{ border-bottom:none; }
+  .steps li::before{ content:counter(st); position:absolute; left:0; top:12px; width:34px; height:34px;
+                     background:var(--brand); color:#fff; border-radius:50%; display:flex; align-items:center;
+                     justify-content:center; font-weight:800; font-size:1rem; }
+  .steps li b{ color:var(--accent); }
+  .guide-tip{ background:#fff7e9; border:1px solid #f2dcae; border-radius:12px; padding:12px 14px;
+              font-size:.92rem; color:#7a5a1e; line-height:1.6; margin-top:14px; }
+
+  /* グループ設定 */
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:.9rem; font-weight:800; color:var(--ink-soft); margin-bottom:6px; }
+  .field input{ width:100%; font-family:inherit; font-size:1.25rem; font-weight:700; color:var(--ink);
+                border:2px solid var(--line); border-radius:12px; padding:12px 14px; background:#fff; }
+  .field input:focus{ outline:none; border-color:var(--brand); }
+  .field .hint{ font-size:.8rem; color:var(--ink-soft); margin-top:5px; line-height:1.5; }
+  .btn-main{ width:100%; border:none; font-family:inherit; font-weight:800; font-size:1.2rem; color:#fff;
+             background:linear-gradient(180deg,#2aa458,#1f8a4c); border-radius:14px; padding:16px; cursor:pointer; }
+  .btn-main.cut{ background:linear-gradient(180deg,#c94040,#b23a48); }
+  .link-state{ text-align:center; font-weight:800; padding:10px; border-radius:12px; margin-bottom:14px; font-size:1rem; }
+  .link-state.off{ background:#f1ede2; color:var(--ink-soft); }
+  .link-state.on{ background:#e6f6ec; color:var(--good); }
+  .link-state.err{ background:#fdecec; color:#8a2b2b; }
+  .member{ display:flex; align-items:center; gap:12px; padding:12px 4px; border-bottom:1px solid var(--line); }
+  .member:last-child{ border-bottom:none; }
+  .member input{ width:26px; height:26px; accent-color:var(--good); flex:none; }
+  .member .nm{ font-size:1.15rem; font-weight:800; }
+  .member .tag{ font-size:.75rem; font-weight:700; color:var(--ink-soft); background:#f1ede2; border-radius:999px; padding:3px 9px; }
+  .member.self .nm{ color:var(--ink-soft); }
+  .no-members{ color:var(--ink-soft); font-size:.95rem; padding:10px 4px; line-height:1.6; }
+
+  /* 招待リンク */
+  .code-row{ display:flex; gap:8px; align-items:stretch; }
+  .code-row input{ flex:1; min-width:0; }
+  .sub-btn{ border:2px solid var(--brand); background:#fff; color:var(--brand); font-family:inherit;
+            font-weight:800; font-size:.95rem; border-radius:12px; padding:0 14px; cursor:pointer; white-space:nowrap; }
+  .sub-btn:active{ background:var(--brand); color:#fff; }
+  .sub-btn.wide{ width:100%; padding:14px; font-size:1.05rem; }
+  .share-url{ background:#eef6f9; border:1px solid #c9e2f0; border-radius:12px; padding:12px 14px;
+              font-size:.9rem; color:#0d3a4d; word-break:break-all; user-select:all; margin-bottom:10px; line-height:1.5; }
+  .share-btns{ display:flex; flex-direction:column; gap:9px; margin-bottom:10px; }
+  .btn-main.share{ background:linear-gradient(180deg,#2b7fc4,#0f4c81); font-size:1.1rem; padding:15px; }
+
+  /* ---- 使い方 / 注意 ---- */
+  .note{ background:#fff7e9; border:1px solid #f2dcae; border-radius:14px; padding:12px 14px; margin:14px 0; font-size:.86rem; color:#7a5a1e; line-height:1.55; }
+  .note b{ color:#8a4d00; }
+  .unsupported{ background:#fdecec; border-color:#f3c0c0; color:#8a2b2b; }
+
+  footer{ text-align:center; color:#a7afb8; font-size:.75rem; padding:26px 0 6px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="head-in">
+    <h1>スマホの耳 <span aria-hidden="true">👂</span><small>会話を文字に</small></h1>
+    <div class="head-actions">
+      <div class="head-status" id="status"><span class="dot"></span><span id="statusText">停止中</span></div>
+      <button class="hbtn" id="groupBtn" title="グループ設定">👥<span class="lbl">グループ</span></button>
+      <button class="hbtn" id="guideBtn" title="使い方">❓<span class="lbl">使い方</span></button>
+    </div>
+  </div>
+</header>
+
+<!-- ===== 使い方ガイド ===== -->
+<div class="overlay" id="guideOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>❓ かんたん使い方ガイド</h3>
+      <button class="x" data-close="guideOverlay" aria-label="閉じる">✕</button>
+    </div>
+    <div class="modal-body">
+      <h4>🎤 ひとりで使うとき</h4>
+      <ol class="steps">
+        <li>みどりの <b>「きく（スタート）」</b> を押します。<br>はじめだけ「マイクを使ってよいですか？」と出るので <b>「許可」</b> を押してください。</li>
+        <li>おばあちゃんに向かって、いつも通り <b>ふつうに話しかけます</b>。</li>
+        <li>話した言葉が、画面に <b>大きな文字</b> で出ます。<br>新しい言葉ほど <b>上</b> に出ます。</li>
+        <li>文字が小さい・大きいときは <b>「文字サイズ ＋ −」</b> で変えられます。</li>
+        <li>終わるときは、赤い <b>「とめる（ストップ）」</b> を押します。</li>
+      </ol>
+
+      <h4>👥 みんなのスマホをつなぐとき</h4>
+      <ol class="steps">
+        <li>右上の <b>「👥 グループ」</b> を押します。</li>
+        <li><b>自分の名前</b>（例：たろう）を入れます。</li>
+        <li>合言葉のよこの <b>「新しく作る」</b> を押します。<br>むずかしい合言葉が自動でできます。</li>
+        <li><b>「つなぐ」</b> を押します。</li>
+        <li>下に出る <b>「🔗 招待リンクをコピー」</b> を押して、<br>そのリンクを <b>LINEなどで家族に送ります</b>。</li>
+        <li>送られた人は、<b>リンクを開いて名前を入れて「つなぐ」</b> だけ。<br>合言葉を打つ必要はありません。</li>
+        <li>だれかが話すと、<b>つながった全員の画面</b> に文字が出ます。</li>
+        <li>「この人の文字は出さなくていい」ときは、グループ画面の <b>「画面に表示する人」</b> のチェックを外します。</li>
+      </ol>
+      <div class="guide-tip">
+        <b>🔒 会話はまもられています</b><br>
+        話した文字は、合言葉から作ったカギで <b>暗号化してから</b> 送られます。<br>
+        <b>リンクを知っている家族だけ</b> が読むことができ、通り道のコンピューターや他人には中身が読めません。<br>
+        招待リンクは、家族以外に送らないようにしてください。
+      </div>
+
+      <h4>💡 画面の見かた</h4>
+      <ol class="steps">
+        <li><b style="color:#b23a48">赤い文字と「？質問」</b> …… 質問されています。お返事してあげてください。</li>
+        <li><b>🧭 意図</b> …… その言葉が何を言いたいのかを表示します。</li>
+        <li><b>💬 返信のボタン</b> …… 押すと、その言葉を <b>声に出して読み上げ</b> ます。おばあちゃんが押せば、まわりの人に聞こえます。</li>
+        <li><b>🔊 読む</b> …… もう一度、声で読み上げます。</li>
+      </ol>
+
+      <div class="guide-tip">
+        <b>うまく聞き取れないときは</b><br>
+        ・スマホを話す人の口に <b>近づけて</b> ください（30cmくらい）。<br>
+        ・テレビや音楽は <b>小さく</b> してください。<br>
+        ・<b>すこしゆっくり</b>、はっきり話すとよく当たります。<br>
+        ・iPhoneでうまく動かないときは、「抑揚で疑問判定」のチェックを外してみてください。
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== グループ設定 ===== -->
+<div class="overlay" id="groupOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>👥 グループ設定</h3>
+      <button class="x" data-close="groupOverlay" aria-label="閉じる">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="link-state off" id="linkState">つながっていません</div>
+
+      <div class="field">
+        <label for="myName">自分の名前</label>
+        <input type="text" id="myName" placeholder="例：たろう" maxlength="12" autocomplete="off">
+        <div class="hint">この名前が、みんなの画面に「だれが話したか」として出ます。</div>
+      </div>
+
+      <div class="field">
+        <label for="roomCode">グループの合言葉</label>
+        <div class="code-row">
+          <input type="text" id="roomCode" placeholder="合言葉" maxlength="60" autocomplete="off">
+          <button class="sub-btn" id="newCodeBtn">新しく作る</button>
+        </div>
+        <div class="hint">同じ合言葉を入れた人どうしがつながります。<br>
+          はじめての方は <b>「新しく作る」</b> を押して、下のリンクを家族に送ってください。</div>
+      </div>
+
+      <button class="btn-main" id="linkBtn">つなぐ</button>
+
+      <div id="shareBox" style="display:none">
+        <h4>🔗 家族を招待する</h4>
+        <div class="share-url" id="shareUrl"></div>
+        <div class="share-btns">
+          <button class="btn-main share" id="copyLinkBtn">🔗 招待リンクをコピー</button>
+          <button class="sub-btn wide" id="shareBtn">LINEなどで送る</button>
+        </div>
+        <div class="hint">
+          このリンクを送ると、開いた人は<b>自動でこのグループに入ります</b>（合言葉の入力は不要）。<br>
+          会話の文字は、この合言葉から作った鍵で<b>暗号化してから</b>送られます。リンクを知っている人だけが読めます。
+        </div>
+      </div>
+
+      <h4>画面に表示する人</h4>
+      <div id="memberList"><div class="no-members">つなぐと、ここに参加している人が出ます。</div></div>
+      <div class="hint" style="font-size:.8rem;color:var(--ink-soft);margin-top:8px;">
+        チェックを外した人の言葉は、あなたの画面には出なくなります（相手の画面には出ます）。
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="mic-area">
+    <button class="mic-btn" id="micBtn">
+      <span class="ico" aria-hidden="true">🎤</span>
+      <span id="micLabel">きく（スタート）</span>
+    </button>
+  </div>
+
+  <div class="live" id="live">
+    <div class="live-hint" id="liveHint">「きく（スタート）」を押すと、話した言葉がここに大きく出ます。</div>
+    <div class="live-text" id="liveText" style="display:none"></div>
+  </div>
+
+  <div class="controls">
+    <div class="ctl">
+      <label>文字サイズ</label>
+      <button class="fs-btn" id="fsDown" aria-label="文字を小さく">−</button>
+      <button class="fs-btn" id="fsUp" aria-label="文字を大きく">＋</button>
+    </div>
+    <div class="ctl">
+      <label>翻訳</label>
+      <select id="langSel">
+        <option value="">しない</option>
+        <option value="en">英語 English</option>
+        <option value="zh-CN">中国語 中文</option>
+        <option value="ko">韓国語 한국어</option>
+        <option value="vi">ベトナム語</option>
+        <option value="pt">ポルトガル語</option>
+        <option value="es">スペイン語</option>
+        <option value="fr">フランス語</option>
+        <option value="tl">タガログ語</option>
+      </select>
+    </div>
+    <div class="ctl">
+      <label class="switch"><input type="checkbox" id="tglIntonation" checked>抑揚で疑問判定</label>
+    </div>
+    <div class="ctl">
+      <label class="switch"><input type="checkbox" id="tglAssist" checked>意図・返信案</label>
+    </div>
+  </div>
+
+  <div class="note" id="supportNote" style="display:none"></div>
+
+  <div class="section-title">
+    <h2>話した言葉の履歴（新しい順）</h2>
+    <button class="clear" id="clearBtn">履歴を消す</button>
+  </div>
+
+  <div id="history"></div>
+  <div class="empty" id="empty">
+    <div class="big">🗒️</div>
+    まだ会話はありません。<br>上の「きく（スタート）」を押して話しかけてください。
+  </div>
+
+  <footer>スマホの耳 👂 ／ 音声はこの端末の中だけで処理されます（翻訳を選んだ時だけ、その文だけ翻訳サービスに送られます）。</footer>
+</div>
+
+<script>
+"use strict";
+/* ============================================================
+   スマホの耳 👂  会話を文字に
+   - Web Speech API による即時文字起こし
+   - 語尾のピッチ（抑揚）解析で疑問形の判定精度を向上
+   - 聞き取りエラーの補正・句読点付与
+   - 翻訳 / 意図 / 返信案
+   ============================================================ */
+
+/* ---------- 保存 ---------- */
+const LS_HISTORY = 'smh_history_v1';
+const LS_SETTINGS = 'smh_settings_v1';
+
+let settings = Object.assign({
+    fs: 30, lang: '', intonation: true, assist: true,
+    myName: '', room: '', muted: []      // muted: 画面に出さない相手の名前
+  }, JSON.parse(localStorage.getItem(LS_SETTINGS) || '{}'));
+let history = JSON.parse(localStorage.getItem(LS_HISTORY) || '[]');
+
+function saveSettings(){ localStorage.setItem(LS_SETTINGS, JSON.stringify(settings)); }
+function saveHistory(){ localStorage.setItem(LS_HISTORY, JSON.stringify(history.slice(0,300))); }
+
+/* ---------- DOM ---------- */
+const $ = s => document.querySelector(s);
+const micBtn=$('#micBtn'), micLabel=$('#micLabel'), statusEl=$('#status'), statusText=$('#statusText');
+const live=$('#live'), liveText=$('#liveText'), liveHint=$('#liveHint');
+const langSel=$('#langSel'), tglIntonation=$('#tglIntonation'), tglAssist=$('#tglAssist');
+const historyEl=$('#history'), emptyEl=$('#empty'), supportNote=$('#supportNote');
+const guideBtn=$('#guideBtn'), groupBtn=$('#groupBtn');
+const guideOverlay=$('#guideOverlay'), groupOverlay=$('#groupOverlay');
+const myNameInput=$('#myName'), roomCodeInput=$('#roomCode'), linkBtn=$('#linkBtn');
+const linkState=$('#linkState'), memberListEl=$('#memberList');
+const newCodeBtn=$('#newCodeBtn'), shareBox=$('#shareBox'), shareUrlEl=$('#shareUrl');
+const copyLinkBtn=$('#copyLinkBtn'), shareBtn=$('#shareBtn');
+
+/* 設定をUIへ反映 */
+document.documentElement.style.setProperty('--fs', settings.fs + 'px');
+langSel.value = settings.lang;
+tglIntonation.checked = settings.intonation;
+tglAssist.checked = settings.assist;
+myNameInput.value = settings.myName;
+roomCodeInput.value = settings.room;
+
+/* ============================================================
+   1. 音声認識
+   ============================================================ */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition = null;
+let listening = false;      // ユーザーが「きく」状態か
+let restarting = false;
+
+if(!SR){
+  supportNote.style.display='block';
+  supportNote.className='note unsupported';
+  supportNote.innerHTML = '<b>このブラウザは音声認識に対応していません。</b><br>iPhone は <b>Safari</b>、Android は <b>Chrome</b> で開いてください。';
+  micBtn.disabled = true;
+}else{
+  recognition = new SR();
+  recognition.lang = 'ja-JP';
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.maxAlternatives = 1;
+
+  recognition.onresult = (e)=>{
+    let interim = '';
+    for(let i=e.resultIndex; i<e.results.length; i++){
+      const res = e.results[i];
+      const txt = res[0].transcript;
+      if(res.isFinal){
+        finalizeUtterance(txt);
+      }else{
+        interim += txt;
+      }
+    }
+    if(interim){ showLive(interim, true); }
+  };
+
+  recognition.onerror = (e)=>{
+    // no-speech / aborted は無視して継続。権限エラーなどは表示。
+    if(e.error === 'not-allowed' || e.error === 'service-not-allowed'){
+      supportNote.style.display='block';
+      supportNote.className='note unsupported';
+      supportNote.innerHTML='<b>マイクの使用が許可されていません。</b><br>ブラウザの設定でマイクを「許可」にしてください。';
+      stopListening();
+    }
+  };
+
+  recognition.onend = ()=>{
+    // iOS などは自動で止まるので、聞く状態なら再開する（擬似的な連続認識）
+    if(listening){
+      restarting = true;
+      try{ recognition.start(); }catch(_){ setTimeout(()=>{ try{ if(listening) recognition.start(); }catch(__){} }, 300); }
+    }
+  };
+}
+
+function startListening(){
+  if(!recognition) return;
+  listening = true;
+  try{ recognition.start(); }catch(_){}
+  startPitchTracking();
+  micBtn.classList.add('listening');
+  micLabel.textContent = 'とめる（ストップ）';
+  micBtn.querySelector('.ico').textContent = '⏸';
+  statusEl.classList.add('on'); statusText.textContent='聞いています';
+  liveHint.style.display='none'; liveText.style.display='block';
+  showLive('…', false);
+}
+function stopListening(){
+  listening = false;
+  if(recognition){ try{ recognition.stop(); }catch(_){} }
+  stopPitchTracking();
+  micBtn.classList.remove('listening');
+  micLabel.textContent = 'きく（スタート）';
+  micBtn.querySelector('.ico').textContent = '🎤';
+  statusEl.classList.remove('on'); statusText.textContent='停止中';
+  live.classList.remove('speaking');
+  liveText.style.display='none'; liveHint.style.display='block';
+}
+micBtn.addEventListener('click', ()=> listening ? stopListening() : startListening());
+
+function showLive(text, speaking){
+  liveText.textContent = text;
+  liveText.style.display='block'; liveHint.style.display='none';
+  live.classList.toggle('speaking', !!speaking);
+}
+
+/* ============================================================
+   2. ピッチ（抑揚）トラッキング  ― 語尾の上がり下がりで疑問判定
+   マイク音声から基本周波数を自動相関で推定し、時系列で保存。
+   発話が確定したら、末尾のピッチが上がっているかを見る。
+   ============================================================ */
+let audioCtx=null, analyser=null, micStream=null, pitchTimer=null;
+let pitchSamples=[];   // { t: ms, f: Hz }
+const PITCH_MIN=70, PITCH_MAX=450;
+
+async function startPitchTracking(){
+  if(!tglIntonation.checked) return;
+  if(audioCtx) return;
+  try{
+    micStream = await navigator.mediaDevices.getUserMedia({ audio:{ echoCancellation:true, noiseSuppression:true } });
+    audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    const src = audioCtx.createMediaStreamSource(micStream);
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 2048;
+    src.connect(analyser);
+    const buf = new Float32Array(analyser.fftSize);
+    pitchTimer = setInterval(()=>{
+      analyser.getFloatTimeDomainData(buf);
+      const f = detectPitch(buf, audioCtx.sampleRate);
+      const t = performance.now();
+      if(f>0){ pitchSamples.push({t, f}); }
+      // 直近6秒だけ保持
+      const cut = t - 6000;
+      while(pitchSamples.length && pitchSamples[0].t < cut) pitchSamples.shift();
+    }, 30);
+  }catch(err){
+    // マイク二重利用に失敗した場合は文法だけで判定
+    audioCtx=null; analyser=null;
+  }
+}
+function stopPitchTracking(){
+  if(pitchTimer){ clearInterval(pitchTimer); pitchTimer=null; }
+  if(micStream){ micStream.getTracks().forEach(t=>t.stop()); micStream=null; }
+  if(audioCtx){ try{ audioCtx.close(); }catch(_){} audioCtx=null; }
+  analyser=null; pitchSamples=[];
+}
+
+/* 自動相関によるピッチ推定（人の声の範囲に限定して高速・堅牢に） */
+function detectPitch(buf, sampleRate){
+  const SIZE = buf.length;
+  let rms=0; for(let i=0;i<SIZE;i++){ rms += buf[i]*buf[i]; }
+  rms = Math.sqrt(rms/SIZE);
+  if(rms < 0.012) return -1;            // 無音・小さすぎ
+  const minLag = Math.floor(sampleRate/PITCH_MAX);
+  const maxLag = Math.min(Math.floor(sampleRate/PITCH_MIN), Math.floor(SIZE/2));
+  let bestLag=-1, bestCorr=0;
+  const corr = new Float32Array(maxLag+2);
+  for(let lag=minLag; lag<=maxLag; lag++){
+    let c=0;
+    for(let i=0;i<SIZE-lag;i++){ c += buf[i]*buf[i+lag]; }
+    c /= (SIZE-lag);
+    corr[lag]=c;
+    if(c>bestCorr){ bestCorr=c; bestLag=lag; }
+  }
+  if(bestLag<=0 || bestCorr < rms*rms*0.35) return -1;   // 相関が弱ければ無声とみなす
+  // 放物線補間で精度を上げる
+  const l=corr[bestLag-1]||bestCorr, m=corr[bestLag], r=corr[bestLag+1]||bestCorr;
+  const denom = (l - 2*m + r);
+  const shift = denom ? (l - r)/(2*denom) : 0;
+  const lag = bestLag + Math.max(-1,Math.min(1,shift));
+  const f = sampleRate/lag;
+  return (f>=PITCH_MIN && f<=PITCH_MAX) ? f : -1;
+}
+
+/* 末尾の抑揚を評価： -1 下降 / 0 平坦 / 1 上昇 と 信頼度 */
+function analyzeEndingIntonation(){
+  if(!pitchSamples.length) return { rise:0, conf:0 };
+  const now = performance.now();
+  // 直近の有声区間（末尾から遡って連続した声の部分）
+  const voiced = pitchSamples.filter(p => p.t > now - 2200);
+  if(voiced.length < 6) return { rise:0, conf:0 };
+  // オクターブ誤検出を軽く抑える：中央値から大きく外れた点を除去
+  const fs = voiced.map(p=>p.f).slice().sort((a,b)=>a-b);
+  const med = fs[Math.floor(fs.length/2)];
+  const clean = voiced.filter(p => p.f > med*0.55 && p.f < med*1.8);
+  if(clean.length < 6) return { rise:0, conf:0 };
+
+  const n = clean.length;
+  const tailN = Math.max(3, Math.round(n*0.30));   // 末尾30%
+  const headPart = clean.slice(0, n - tailN);
+  const tailPart = clean.slice(n - tailN);
+  const medianF = arr => { const s=arr.map(p=>p.f).sort((a,b)=>a-b); return s[Math.floor(s.length/2)]; };
+  const baseF = medianF(headPart.length?headPart:clean);
+  const endF  = medianF(tailPart);
+  if(!baseF || !endF) return { rise:0, conf:0 };
+  // 半音 = 約 1.059 倍。上昇/下降を半音単位で評価
+  const semis = 12 * Math.log2(endF/baseF);
+  let rise = 0;
+  if(semis >= 1.3) rise = 1;         // 1.3半音以上上がれば疑問寄り
+  else if(semis <= -1.3) rise = -1;  // はっきり下がれば言い切り
+  const conf = Math.min(1, Math.abs(semis)/3);
+  return { rise, conf, semis };
+}
+
+/* ============================================================
+   3. 発話の確定処理（補正 → 疑問判定 → 意図/返信 → 翻訳 → 履歴）
+   ============================================================ */
+function finalizeUtterance(raw){
+  const cleaned = correctText(raw);
+  if(!cleaned.trim()) return;
+
+  const g = grammaticalQuestion(cleaned);
+  const into = tglIntonation.checked ? analyzeEndingIntonation() : { rise:0, conf:0 };
+
+  // 判定ロジック：文法的疑問 or （抑揚がはっきり上昇）
+  let isQuestion = g.isQ;
+  let reason = g.isQ ? '言葉づかい' : '';
+  if(into.rise === 1 && into.conf >= 0.35){
+    isQuestion = true;
+    reason = reason ? '言葉づかい＋抑揚' : '語尾の上がり';
+  }
+  // 言い切り（です・ます等）＋はっきり下降なら疑問を打ち消す
+  if(g.strongStatement && into.rise === -1 && !g.isQ){ isQuestion = false; }
+
+  const finalText = punctuate(cleaned, isQuestion);
+  const item = {
+    id: Date.now() + '_' + Math.random().toString(36).slice(2,6),
+    text: finalText,
+    isQuestion,
+    reason,
+    semis: into.semis!=null ? Math.round(into.semis*10)/10 : null,
+    time: Date.now(),
+    from: (linked ? (settings.myName || '自分') : ''),
+    mine: true,
+    lang: langSel.value || '',
+    translated: null,
+    intent: null,
+    replies: []
+  };
+
+  if(tglAssist.checked){
+    const a = analyzeIntent(cleaned, isQuestion);
+    item.intent = a.intent; item.replies = a.replies;
+  }
+
+  history.unshift(item);   // 最新を先頭に
+  saveHistory();
+  renderOne(item, true);
+  clearLiveSoon();
+
+  sendToGroup(item);       // つながっていれば仲間の画面にも出す
+  if(item.lang){ translateItem(item); }
+}
+
+let liveClearTimer=null;
+function clearLiveSoon(){
+  if(liveClearTimer) clearTimeout(liveClearTimer);
+  liveText.textContent='…';
+  liveClearTimer = setTimeout(()=>{ if(listening) showLive('…', false); }, 400);
+}
+
+/* ============================================================
+   4. 聞き取りエラー補正・整形
+   ============================================================ */
+const CORRECTIONS = [
+  // よくある誤変換・表記ゆれ（必要に応じて追記できます）
+  [/御?座います/g,'ございます'],
+  [/有難う/g,'ありがとう'],
+  [/宜しく/g,'よろしく'],
+  [/(\s)ねー(\s|$)/g,'$1ね$2'],
+  [/(です|ます)ね?ー+/g,'$1'],
+];
+function correctText(s){
+  let t = (s||'').trim();
+  // フィラー（言いよどみ）の除去
+  const filler = /(^|[、。 　])\s*(えー*っ?と|ええと|えっと|あの[ーうっ]*|その[ー]*|うーん|まぁ|まあ|なんか|ほら)\s*(?=[、。 　]|$)/g;
+  t = t.replace(filler, '$1').replace(filler, '$1');   // 連続フィラーも取る
+  t = t.replace(/^[、。 　]+/, '');
+  // 日本語の語間に紛れ込む不要なスペースを詰める（自然な文に）
+  for(let i=0;i<3;i++){
+    t = t.replace(/([぀-ヿ一-龯々ー])[ 　]+([぀-ヿ一-龯々ー])/g, '$1$2');
+  }
+  // 空白整理
+  t = t.replace(/[ 　]{2,}/g,' ').trim();
+  // 辞書補正
+  for(const [re,to] of CORRECTIONS){ t = t.replace(re,to); }
+  return t;
+}
+/* 句読点・記号の付与 */
+function punctuate(s, isQuestion){
+  let t = s.trim();
+  // 既存の末尾記号を一旦除去
+  t = t.replace(/[。．\.！!？\?～〜]+$/,'');
+  if(!t) return s;
+  if(isQuestion) t += '？';
+  else t += '。';
+  return t;
+}
+
+/* ============================================================
+   5. 疑問形の言語的判定
+   ============================================================ */
+function grammaticalQuestion(s){
+  const t = s.replace(/[\s　]/g,'');
+  let isQ=false, strongStatement=false;
+  // 明示的な疑問符
+  if(/[？\?]$/.test(s.trim())) isQ=true;
+  // 終助詞・語尾パターン
+  if(/(か|かな|かい|の|のか|っけ|だっけ|ですか|ますか|でしょうか|ませんか|ない\?|ますか)$/.test(t)) isQ=true;
+  // 疑問詞
+  if(/(なに|なん|何|どこ|どちら|どっち|いつ|だれ|誰|なぜ|どうして|なんで|どう|どの|どれ|いくつ|いくら|どんな|どうやって)/.test(t)) {
+    // 疑問詞があり、言い切りで終わっていなければ疑問寄り
+    if(!/(です|ます|でした|ました|だ|だった|だよ|ですよ|ますよ|なんだ)$/.test(t)) isQ = true;
+    else if(/(の|か|かな)$/.test(t)) isQ = true;
+  }
+  // はっきりした言い切り（抑揚で打ち消す判断に使う）
+  if(/(です|ます|でした|ました|だよ|ですよ|ますよ|だね|ですね|ましょう|ください|なさい)$/.test(t)) strongStatement=true;
+  return { isQ, strongStatement };
+}
+
+/* ============================================================
+   6. 意図の推定 と 返信候補
+   ============================================================ */
+function analyzeIntent(s, isQuestion){
+  const t = s;
+  const has = (...ws)=> ws.some(w=> t.includes(w));
+  let intent = isQuestion ? '質問・たずねている' : '会話・伝えている';
+  let replies = [];
+
+  if(has('ありがとう','感謝','助かった','おかげ')){
+    intent='お礼を言っている'; replies=['どういたしまして','いえいえ','また言ってね'];
+  } else if(has('おはよう','こんにちは','こんばんは','ただいま','おかえり','おやすみ','元気')){
+    intent='あいさつ・声かけ'; replies=['おはよう','元気だよ','ありがとう、あなたは？'];
+  } else if(has('痛い','いたい','具合','体調','しんどい','つらい','疲れ','だるい','熱','風邪','病院','薬')){
+    intent='体調・気持ちのこと'; replies=['大丈夫？','無理しないでね','お医者さんに行こうか'];
+  } else if(has('ごはん','ご飯','食べ','お腹','おなか','空い','飲み','お茶','水','お腹すい')){
+    intent='食事・飲み物のこと'; replies=['食べたい','もういらないよ','ありがとう、いただくね'];
+  } else if(has('寒い','暑い','エアコン','暖房','冷房','窓','電気','明かり','トイレ','お風呂','ふろ')){
+    intent='身のまわり・環境のこと'; replies=['お願いします','大丈夫だよ','ありがとう'];
+  } else if(has('取って','手伝','助け','お願い','してくれ','ちょうだい','貸して','来て')){
+    intent='お願い・頼みごと'; replies=['いいよ','やっておくね','ちょっと待ってね'];
+  } else if(has('どこ','いつ','何時','なんじ','予定','行く','帰る','来る')){
+    intent='予定・場所のこと'; replies=['うん、行くよ','あとで教えるね','わからないな'];
+  } else if(has('好き','嬉しい','うれしい','楽しい','よかった','幸せ')){
+    intent='うれしい気持ち'; replies=['よかったね','私も嬉しい','ありがとう'];
+  } else if(has('ごめん','すみません','申し訳')){
+    intent='あやまっている'; replies=['気にしないで','大丈夫だよ','ありがとう'];
+  }
+
+  // 質問なら「はい／いいえ」系を先頭に足す
+  if(isQuestion){
+    const yn = ['はい','いいえ','うーん、わからない'];
+    replies = [...yn, ...replies].slice(0,5);
+  } else if(!replies.length){
+    replies = ['うんうん','そうなんだ','なるほど','ありがとう'];
+  }
+  // 重複除去
+  replies = [...new Set(replies)].slice(0,5);
+  return { intent, replies };
+}
+
+/* ============================================================
+   7. 翻訳（MyMemory 無料APIを利用。翻訳を選んだ時だけ送信）
+   ============================================================ */
+async function translateItem(item){
+  const el = document.getElementById('tl_'+item.id);
+  const target = item.lang;
+  if(!target) return;
+  if(el){ el.querySelector('.tl-text').textContent='翻訳中…'; }
+  try{
+    const url = 'https://api.mymemory.translated.net/get?q='+encodeURIComponent(item.text)+'&langpair=ja|'+encodeURIComponent(target);
+    const res = await fetch(url);
+    const data = await res.json();
+    const tr = data && data.responseData && data.responseData.translatedText;
+    if(tr){
+      item.translated = tr;
+      const idx = history.findIndex(h=>h.id===item.id);
+      if(idx>=0){ history[idx].translated = tr; saveHistory(); }
+      if(el){ el.querySelector('.tl-text').textContent = tr; }
+    }else{
+      if(el){ el.querySelector('.tl-text').textContent='（翻訳できませんでした）'; }
+    }
+  }catch(err){
+    if(el){ el.querySelector('.tl-text').textContent='（オフラインのため翻訳できません）'; }
+  }
+}
+const LANG_LABEL = {en:'English',['zh-CN']:'中文',ko:'한국어',vi:'Tiếng Việt',pt:'Português',es:'Español',fr:'Français',tl:'Tagalog'};
+
+/* ============================================================
+   8. 読み上げ（返信案を声に出す）
+   ============================================================ */
+function speak(text, lang){
+  if(!('speechSynthesis' in window)) return;
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = lang || 'ja-JP';
+  u.rate = 0.95;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(u);
+}
+
+/* ============================================================
+   8.5 グループ連携（同じ合言葉の人どうしで文字を共有）
+   つなぎ方は2通り。開いた場所によって自動で選ばれます。
+     ・おうちモード  … 自宅のPC(serve.py)経由。外に一切出ません。
+     ・リンクモード  … インターネット経由。公開の中継所を通りますが、
+                       合言葉から作った鍵で暗号化してから送るため、
+                       中継所も第三者も中身を読めません。
+   ============================================================ */
+let linked = false;            // つながっているか
+let netMode = '';              // 'local' | 'internet'
+let es = null;                 // おうちモード用 EventSource
+let mq = null;                 // リンクモード用 MQTTクライアント
+let cryptoKey = null;          // リンクモード用 暗号鍵
+let mqTopic = '';              // リンクモード用 トピック
+let beatTimer = null, pruneTimer = null;
+
+// 端末(タブ)ごとの識別子。sessionStorageなので、同じスマホで2画面開いても混ざらない。
+let myCid = sessionStorage.getItem('smh_cid') || (Math.random().toString(36).slice(2,10));
+sessionStorage.setItem('smh_cid', myCid);
+let members = [];              // [{cid,name}]
+const seenAt = new Map();      // cid -> 最後に見かけた時刻（リンクモードの在席管理）
+
+const BROKERS = [
+  'wss://broker.emqx.io:8084/mqtt',
+  'wss://broker.hivemq.com:8884/mqtt',
+  'wss://test.mosquitto.org:8081'
+];
+
+function apiAvailable(){ return location.protocol === 'http:' || location.protocol === 'https:'; }
+
+/* ---- 合言葉づくり / 共有リンク ---- */
+function makeCode(){
+  // 読み間違えにくい文字だけを使い、推測されない長さにする
+  const cs = 'abcdefghjkmnpqrstuvwxyz23456789';
+  const a = new Uint32Array(15); crypto.getRandomValues(a);
+  const raw = [...a].map(n=> cs[n % cs.length]).join('');
+  return raw.slice(0,5)+'-'+raw.slice(5,10)+'-'+raw.slice(10,15);
+}
+function shareLink(){
+  const code = (roomCodeInput.value||'').trim();
+  if(!code) return '';
+  return location.origin + location.pathname + '#g=' + encodeURIComponent(code);
+}
+
+/* ---- 暗号化（合言葉から鍵を作る。鍵は端末の外に出ません） ---- */
+async function deriveKey(code){
+  const enc = new TextEncoder();
+  const base = await crypto.subtle.importKey('raw', enc.encode(code), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name:'PBKDF2', salt: enc.encode('sumaho-no-mimi/v1'), iterations: 150000, hash:'SHA-256' },
+    base, { name:'AES-GCM', length:256 }, false, ['encrypt','decrypt']
+  );
+}
+async function topicFor(code){
+  const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('topic/'+code));
+  const hex = [...new Uint8Array(h)].slice(0,12).map(b=>b.toString(16).padStart(2,'0')).join('');
+  return 'sumahonomimi/' + hex;      // 合言葉そのものは出さない
+}
+function b64(bytes){ let s=''; for(const b of bytes) s += String.fromCharCode(b); return btoa(s); }
+function unb64(str){ const bin=atob(str); const a=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i); return a; }
+async function seal(obj){
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM', iv}, cryptoKey,
+              new TextEncoder().encode(JSON.stringify(obj))));
+  const out = new Uint8Array(iv.length + ct.length); out.set(iv,0); out.set(ct, iv.length);
+  return b64(out);
+}
+async function unseal(str){
+  const buf = unb64(str);
+  const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv: buf.slice(0,12)}, cryptoKey, buf.slice(12));
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+
+/* ---- MQTTライブラリを必要になったときだけ読み込む ---- */
+function loadScript(src){
+  return new Promise((ok,ng)=>{ const s=document.createElement('script'); s.src=src; s.onload=ok; s.onerror=ng; document.head.appendChild(s); });
+}
+async function ensureMqtt(){
+  if(window.mqtt) return true;
+  try{ await loadScript('mqtt.min.js'); }catch(_){
+    try{ await loadScript('https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js'); }catch(__){ return false; }
+  }
+  return !!window.mqtt;
+}
+
+/* ---- つなぐ / 切る ---- */
+async function connectRoom(){
+  const name = (myNameInput.value||'').trim();
+  const room = (roomCodeInput.value||'').trim();
+  if(!name){ setLinkState('err','自分の名前を入れてください'); myNameInput.focus(); return; }
+  if(!room){ setLinkState('err','合言葉を入れてください（「新しく作る」でも作れます）'); roomCodeInput.focus(); return; }
+  if(!apiAvailable()){
+    setLinkState('err','ファイルを直接開いているため、つなげません。共有リンクから開いてください。');
+    return;
+  }
+  settings.myName = name; settings.room = room; saveSettings();
+  disconnectRoom(true);
+  setLinkState('off','つないでいます…');
+
+  // まず「おうちのサーバー」があるか確認し、なければインターネット経由にする
+  let local = false;
+  try{
+    const ctl = new AbortController(); const to = setTimeout(()=>ctl.abort(), 1500);
+    const r = await fetch('/api/hello', {signal: ctl.signal}); clearTimeout(to);
+    local = r.ok;
+  }catch(_){ local = false; }
+
+  if(local) connectLocal(room, name);
+  else await connectInternet(room, name);
+}
+
+function connectLocal(room, name){
+  netMode = 'local';
+  const url = `/api/events?room=${encodeURIComponent(room)}&name=${encodeURIComponent(name)}&cid=${encodeURIComponent(myCid)}`;
+  es = new EventSource(url);
+  es.onopen = ()=>{ linked = true; updateLinkUI(); };
+  es.onmessage = (e)=>{
+    let d; try{ d = JSON.parse(e.data); }catch(_){ return; }
+    if(d.type === 'hello'){ linked = true; updateLinkUI(); }
+    else if(d.type === 'members'){ members = d.members||[]; renderMembers(); }
+    else if(d.type === 'say'){ handleRemoteSay(d.msg||{}); }
+  };
+  es.onerror = ()=>{
+    if(es && es.readyState === EventSource.CLOSED){ linked=false; updateLinkUI(); }
+    else setLinkState('err','つなぎ直しています…');
+  };
+}
+
+async function connectInternet(room, name){
+  netMode = 'internet';
+  if(!window.isSecureContext || !crypto.subtle){
+    setLinkState('err','安全な接続(https)でないため暗号化できません。共有リンクから開いてください。');
+    return;
+  }
+  if(!(await ensureMqtt())){
+    setLinkState('err','中継プログラムを読み込めませんでした。電波の良い場所でもう一度お試しください。');
+    return;
+  }
+  try{
+    cryptoKey = await deriveKey(room);
+    mqTopic = await topicFor(room);
+  }catch(_){ setLinkState('err','暗号鍵を作れませんでした'); return; }
+
+  let idx = 0;
+  const tryConnect = ()=>{
+    if(idx >= BROKERS.length){ setLinkState('err','インターネットの中継所につながりません'); return; }
+    const url = BROKERS[idx++];
+    let settled = false;
+    const client = mqtt.connect(url, {
+      clientId: 'smh_'+myCid+'_'+Math.random().toString(16).slice(2,6),
+      connectTimeout: 8000, reconnectPeriod: 0, clean: true
+    });
+    mq = client;
+    client.on('connect', ()=>{
+      settled = true;
+      client.subscribe(mqTopic, (err)=>{
+        if(err){ setLinkState('err','中継所に入れませんでした'); return; }
+        linked = true; updateLinkUI();
+        pub({t:'hello'});                                  // 参加を知らせる
+        beatTimer = setInterval(()=> pub({t:'beat'}), 20000);
+        pruneTimer = setInterval(prune, 10000);
+      });
+    });
+    client.on('message', async (_t, payload)=>{
+      let d; try{ d = await unseal(payload.toString()); }catch(_){ return; }  // 合言葉が違う人の分は読めない＝無視
+      if(!d || d.cid === myCid) return;
+      seenAt.set(d.cid, Date.now());
+      touchMember(d.cid, d.name);
+      if(d.t === 'hello'){ pub({t:'hi'}); }                // 新しい人に自分の存在を返事
+      else if(d.t === 'bye'){ dropMember(d.cid); }
+      else if(d.t === 'say'){ handleRemoteSay(d.msg||{}); }
+    });
+    client.on('error', ()=>{ if(!settled){ try{client.end(true);}catch(_){} tryConnect(); } });
+    client.on('close', ()=>{ if(!settled){ try{client.end(true);}catch(_){} tryConnect(); } });
+  };
+  tryConnect();
+}
+
+async function pub(obj){
+  if(!mq || !cryptoKey) return;
+  obj.cid = myCid; obj.name = settings.myName;
+  try{ mq.publish(mqTopic, await seal(obj)); }catch(_){}
+}
+function touchMember(cid, name){
+  if(!cid) return;
+  seenAt.set(cid, Date.now());
+  const m = members.find(x=>x.cid===cid);
+  if(m){ if(name && m.name!==name){ m.name=name; renderMembers(); } }
+  else { members.push({cid, name: name||'だれか'}); renderMembers(); }
+}
+function dropMember(cid){
+  const before = members.length;
+  members = members.filter(m=>m.cid!==cid); seenAt.delete(cid);
+  if(members.length!==before) renderMembers();
+}
+function prune(){          // しばらく合図のない人は退出とみなす
+  const limit = Date.now() - 70000;
+  let changed=false;
+  for(const [cid,t] of [...seenAt]){
+    if(t < limit){ seenAt.delete(cid); members = members.filter(m=>m.cid!==cid); changed=true; }
+  }
+  if(changed) renderMembers();
+}
+
+function disconnectRoom(quiet){
+  if(beatTimer){ clearInterval(beatTimer); beatTimer=null; }
+  if(pruneTimer){ clearInterval(pruneTimer); pruneTimer=null; }
+  if(es){ try{ es.close(); }catch(_){} es=null; }
+  if(mq){ try{ pub({t:'bye'}); }catch(_){}
+          const c=mq; mq=null; setTimeout(()=>{ try{ c.end(true); }catch(_){} }, 120); }
+  cryptoKey=null; mqTopic='';
+  linked = false; members = []; seenAt.clear();
+  if(!quiet){ renderMembers(); updateLinkUI(); }
+}
+
+function setLinkState(kind, text){
+  linkState.className = 'link-state ' + kind;
+  linkState.textContent = text;
+}
+function updateLinkUI(){
+  if(linked){
+    const how = netMode==='local' ? 'おうちのサーバー' : 'インターネット（暗号化）🔒';
+    setLinkState('on', `✅ つながっています（${how}）`);
+    linkBtn.textContent = '切る';
+    linkBtn.classList.add('cut');
+    groupBtn.classList.add('linked');
+  }else{
+    setLinkState('off','つながっていません');
+    linkBtn.textContent = 'つなぐ';
+    linkBtn.classList.remove('cut');
+    groupBtn.classList.remove('linked');
+  }
+  shareBox.style.display = (roomCodeInput.value||'').trim() ? 'block' : 'none';
+  renderMembers();
+}
+
+/* 話した内容を仲間へ送る */
+function sendToGroup(item){
+  if(!linked) return;
+  const msg = {
+    id: item.id, text: item.text, isQuestion: item.isQuestion,
+    reason: item.reason, semis: item.semis, time: item.time, name: settings.myName
+  };
+  if(netMode === 'local'){
+    fetch('/api/say', { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(Object.assign({room:settings.room, cid:myCid}, msg)) }).catch(()=>{});
+  }else{
+    pub({t:'say', msg});
+  }
+}
+
+/* 仲間の発言を受け取る */
+function handleRemoteSay(msg){
+  const from = msg.name || 'だれか';
+  if(settings.muted.includes(from)) return;          // 表示しない相手
+  if(history.some(h=>h.id===msg.id)) return;         // 重複防止
+
+  const item = {
+    id: msg.id || (Date.now()+'_r'), text: msg.text||'',
+    isQuestion: !!msg.isQuestion, reason: msg.reason||'',
+    semis: (msg.semis!=null?msg.semis:null),
+    time: msg.time || Date.now(),
+    from, mine:false,
+    lang: langSel.value || '',    // 翻訳は「受け取った人の設定」で行う
+    translated:null, intent:null, replies:[]
+  };
+  if(tglAssist.checked){
+    const a = analyzeIntent(item.text, item.isQuestion);
+    item.intent = a.intent; item.replies = a.replies;
+  }
+  history.unshift(item);
+  saveHistory();
+  renderOne(item, true);
+  if(item.lang) translateItem(item);
+}
+
+/* 参加者一覧（表示する人をチェックで選ぶ） */
+function renderMembers(){
+  if(!linked){
+    memberListEl.innerHTML = '<div class="no-members">つなぐと、ここに参加している人が出ます。</div>';
+    return;
+  }
+  // 名前で重複をまとめる（同じ人が複数端末の場合）
+  const names = [...new Set(members.map(m=>m.name))];
+  const others = names.filter(n=> n !== settings.myName);
+  let html = '';
+  if(settings.myName){
+    html += `<div class="member self"><input type="checkbox" checked disabled>
+             <span class="nm">${esc(settings.myName)}</span><span class="tag">自分</span></div>`;
+  }
+  if(!others.length){
+    html += '<div class="no-members">ほかの人はまだ参加していません。<br>下のリンクを送ってあげてください。</div>';
+  }else{
+    others.forEach(n=>{
+      const on = !settings.muted.includes(n);
+      html += `<div class="member"><input type="checkbox" data-member="${esc(n)}" ${on?'checked':''}>
+               <span class="nm">${esc(n)}</span></div>`;
+    });
+  }
+  memberListEl.innerHTML = html;
+  memberListEl.querySelectorAll('[data-member]').forEach(cb=>{
+    cb.addEventListener('change', ()=>{
+      const n = cb.dataset.member;
+      if(cb.checked) settings.muted = settings.muted.filter(x=>x!==n);
+      else if(!settings.muted.includes(n)) settings.muted.push(n);
+      saveSettings();
+    });
+  });
+}
+
+/* ---- 合言葉づくり・リンク共有のボタン ---- */
+newCodeBtn.addEventListener('click', ()=>{
+  roomCodeInput.value = makeCode();
+  settings.room = roomCodeInput.value; saveSettings();
+  shareBox.style.display='block';
+  shareUrlEl.textContent = shareLink();
+});
+roomCodeInput.addEventListener('input', ()=>{
+  shareBox.style.display = roomCodeInput.value.trim() ? 'block' : 'none';
+  shareUrlEl.textContent = shareLink();
+});
+copyLinkBtn.addEventListener('click', async ()=>{
+  const url = shareLink();
+  if(!url) return;
+  try{
+    await navigator.clipboard.writeText(url);
+    copyLinkBtn.textContent = '✅ コピーしました！';
+  }catch(_){
+    // クリップボードが使えない端末では選択してもらう
+    const r = document.createRange(); r.selectNodeContents(shareUrlEl);
+    const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+    copyLinkBtn.textContent = '長押しでコピーしてください';
+  }
+  setTimeout(()=>{ copyLinkBtn.textContent = '🔗 招待リンクをコピー'; }, 2200);
+});
+shareBtn.addEventListener('click', async ()=>{
+  const url = shareLink(); if(!url) return;
+  if(navigator.share){
+    try{ await navigator.share({ title:'スマホの耳 👂', text:'いっしょに会話を文字にしよう', url }); }catch(_){}
+  }else{ copyLinkBtn.click(); }
+});
+
+linkBtn.addEventListener('click', ()=>{ linked ? disconnectRoom(false) : connectRoom(); });
+
+/* ---- モーダルの開閉 ---- */
+function openModal(el){ el.classList.add('open'); }
+function closeModal(el){ el.classList.remove('open'); }
+guideBtn.addEventListener('click', ()=> openModal(guideOverlay));
+groupBtn.addEventListener('click', ()=>{ openModal(groupOverlay); renderMembers(); });
+document.querySelectorAll('[data-close]').forEach(b=>{
+  b.addEventListener('click', ()=> closeModal(document.getElementById(b.dataset.close)));
+});
+[guideOverlay, groupOverlay].forEach(ov=>{
+  ov.addEventListener('click', e=>{ if(e.target===ov) closeModal(ov); });   // 外側タップで閉じる
+});
+
+/* ============================================================
+   9. 描画
+   ============================================================ */
+function fmtTime(ts){
+  const d=new Date(ts);
+  const hh=String(d.getHours()).padStart(2,'0'), mm=String(d.getMinutes()).padStart(2,'0');
+  return `${hh}:${mm}`;
+}
+function esc(s){ return (s||'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function cardHTML(item){
+  const q = item.isQuestion;
+  const remote = item.from && !item.mine;
+  let html = `<div class="card ${q?'q':''} ${remote?'remote':''}" id="card_${item.id}">`;
+  if(item.from){
+    html += `<div class="who ${item.mine?'me':''}">${item.mine?'🗣':'👤'} ${esc(item.from)}</div>`;
+  }
+  html += `<div class="said">${esc(item.text)}${q?'<span class="qflag">？ 質問</span>':''}</div>`;
+
+  // メタ（判定理由・抑揚）
+  const metas=[];
+  if(item.reason) metas.push(`<span class="chip">判定: <b>${esc(item.reason)}</b></span>`);
+  if(item.semis!=null && Math.abs(item.semis)>=0.3){
+    const arrow = item.semis>0 ? '↗ 上がり' : '↘ 下がり';
+    metas.push(`<span class="chip">語尾: <b>${arrow}</b> (${item.semis>0?'+':''}${item.semis}半音)</span>`);
+  }
+  if(metas.length) html += `<div class="meta-row">${metas.join('')}</div>`;
+
+  // 翻訳枠
+  if(item.lang){
+    html += `<div class="translated" id="tl_${item.id}"><div class="tl-lang">${LANG_LABEL[item.lang]||item.lang}</div><div class="tl-text">${item.translated?esc(item.translated):'…'}</div></div>`;
+  }
+
+  // 意図
+  if(item.intent){ html += `<div class="intent">🧭 意図: <b>${esc(item.intent)}</b></div>`; }
+
+  // 返信案
+  if(item.replies && item.replies.length){
+    html += `<div class="replies">`;
+    item.replies.forEach(r=>{ html += `<button class="reply-btn" data-say="${esc(r)}">💬 ${esc(r)}</button>`; });
+    html += `</div>`;
+  }
+
+  // フッター
+  html += `<div class="foot"><span class="time">🕐 ${fmtTime(item.time)}</span><div class="mini">`;
+  html += `<button data-read="${esc(item.text)}">🔊 読む</button>`;
+  html += `<button data-del="${item.id}">🗑</button>`;
+  html += `</div></div>`;
+
+  html += `</div>`;
+  return html;
+}
+
+function renderOne(item, prepend){
+  emptyEl.style.display='none';
+  const div = document.createElement('div');
+  div.innerHTML = cardHTML(item);
+  const node = div.firstElementChild;
+  if(prepend) historyEl.insertBefore(node, historyEl.firstChild);
+  else historyEl.appendChild(node);
+  wireCard(node);
+}
+function renderAll(){
+  historyEl.innerHTML='';
+  if(!history.length){ emptyEl.style.display='block'; return; }
+  emptyEl.style.display='none';
+  history.forEach(it=> renderOne(it, false));
+}
+function wireCard(node){
+  node.querySelectorAll('[data-say]').forEach(b=> b.addEventListener('click', ()=> speak(b.dataset.say,'ja-JP')));
+  node.querySelectorAll('[data-read]').forEach(b=> b.addEventListener('click', ()=> speak(b.dataset.read,'ja-JP')));
+  node.querySelectorAll('[data-del]').forEach(b=> b.addEventListener('click', ()=>{
+    const id=b.dataset.del;
+    history = history.filter(h=>h.id!==id);
+    saveHistory();
+    const c=document.getElementById('card_'+id); if(c) c.remove();
+    if(!history.length) emptyEl.style.display='block';
+  }));
+}
+
+/* ============================================================
+   10. 設定操作
+   ============================================================ */
+$('#fsUp').addEventListener('click', ()=>{ settings.fs=Math.min(64,settings.fs+3); applyFs(); });
+$('#fsDown').addEventListener('click', ()=>{ settings.fs=Math.max(20,settings.fs-3); applyFs(); });
+function applyFs(){ document.documentElement.style.setProperty('--fs', settings.fs+'px'); saveSettings(); }
+
+langSel.addEventListener('change', ()=>{ settings.lang=langSel.value; saveSettings(); });
+tglIntonation.addEventListener('change', ()=>{
+  settings.intonation=tglIntonation.checked; saveSettings();
+  if(listening){ tglIntonation.checked ? startPitchTracking() : stopPitchTracking(); }
+});
+tglAssist.addEventListener('change', ()=>{ settings.assist=tglAssist.checked; saveSettings(); });
+
+$('#clearBtn').addEventListener('click', ()=>{
+  if(!history.length) return;
+  if(confirm('履歴をすべて消しますか？')){ history=[]; saveHistory(); renderAll(); }
+});
+
+/* 起動時 */
+renderAll();
+
+/* 招待リンク( #g=合言葉 )で開かれたときは、その合言葉を入れて自動で参加する。
+   ＃以降はサーバーに送られないので、合言葉が外部に漏れることはありません。 */
+(function joinFromLink(){
+  const m = /[#&]g=([^&]+)/.exec(location.hash||'');
+  const invited = m ? decodeURIComponent(m[1]) : '';
+  if(invited){
+    settings.room = invited; saveSettings();
+    roomCodeInput.value = invited;
+    if(!settings.myName){
+      // 名前がまだなら、名前を聞くためにグループ画面を開く
+      openModal(groupOverlay);
+      setLinkState('off','お名前を入れて「つなぐ」を押してください');
+      shareBox.style.display='block'; shareUrlEl.textContent = shareLink();
+      myNameInput.focus();
+      return;
+    }
+  }
+  roomCodeInput.value = settings.room || '';
+  shareBox.style.display = settings.room ? 'block' : 'none';
+  shareUrlEl.textContent = shareLink();
+  // 名前と合言葉がそろっていれば自動でつなぎ直す
+  if(settings.myName && settings.room && apiAvailable()){ connectRoom(); }
+})();
+
+/* 画面を消してもマイクが止まらないよう、必要なら復帰させる */
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState==='visible' && listening && recognition){
+    try{ recognition.start(); }catch(_){}
+  }
+});
+</script>
+</body>
+</html>
