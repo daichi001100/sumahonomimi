@@ -112,7 +112,11 @@
   .chip{ font-size:.82rem; font-weight:700; color:var(--ink-soft); background:#f1ede2; border-radius:999px; padding:5px 11px; }
   .chip b{ color:var(--brand); }
   .translated{ margin-top:12px; padding:12px 14px; background:#eef6f9; border-radius:12px; }
+  .translated .tl-head{ display:flex; align-items:center; gap:10px; }
   .translated .tl-lang{ font-size:.75rem; font-weight:800; color:var(--brand-2); letter-spacing:.05em; }
+  .translated .tl-speak{ margin-left:auto; border:1.5px solid var(--brand-2); background:#fff; color:var(--brand-2);
+    font-family:inherit; font-weight:800; font-size:.85rem; border-radius:10px; padding:6px 12px; cursor:pointer; white-space:nowrap; }
+  .translated .tl-speak:active{ background:var(--brand-2); color:#fff; }
   .translated .tl-text{ font-size: calc(var(--fs) - 4px); font-weight:700; color:#0d3a4d; word-break:break-word; margin-top:3px; }
   .intent{ margin-top:12px; font-size:.95rem; color:var(--ink-soft); }
   .intent b{ color:var(--accent); }
@@ -832,7 +836,10 @@ async function translateItem(item){
       item.translated = tr;
       const idx = history.findIndex(h=>h.id===item.id);
       if(idx>=0){ history[idx].translated = tr; saveHistory(); }
-      if(el){ el.querySelector('.tl-text').textContent = tr; }
+      if(el){
+        el.querySelector('.tl-text').textContent = tr;
+        const sp = el.querySelector('.tl-speak'); if(sp) sp.style.display='';   // 読み上げボタンを出す
+      }
     }else{
       if(el){ el.querySelector('.tl-text').textContent='（翻訳できませんでした）'; }
     }
@@ -841,17 +848,38 @@ async function translateItem(item){
   }
 }
 const LANG_LABEL = {en:'English',['zh-CN']:'中文',ko:'한국어',vi:'Tiếng Việt',pt:'Português',es:'Español',fr:'Français',tl:'Tagalog'};
+// 翻訳コード → 読み上げ用の言語コード（音声を選ぶのに使う）
+const LANG_SPEECH = {en:'en-US',['zh-CN']:'zh-CN',ko:'ko-KR',vi:'vi-VN',pt:'pt-BR',es:'es-ES',fr:'fr-FR',tl:'fil-PH'};
 
 /* ============================================================
-   8. 読み上げ（返信案を声に出す）
+   8. 読み上げ（日本語・返信案・翻訳文を声に出す）
    ============================================================ */
+let voiceCache = [];
+function loadVoices(){ try{ voiceCache = window.speechSynthesis.getVoices() || []; }catch(_){ voiceCache = []; } }
+if('speechSynthesis' in window){
+  loadVoices();
+  window.speechSynthesis.onvoiceschanged = loadVoices;   // 端末が声の一覧を用意し終えたら取り込む
+}
+function pickVoice(lang){
+  if(!voiceCache.length) loadVoices();
+  const want = (lang||'').toLowerCase();
+  const base = want.split('-')[0];
+  // まず完全一致、なければ言語だけ一致（例: pt-BR が無ければ pt-PT）
+  return voiceCache.find(v=> v.lang && v.lang.toLowerCase()===want)
+      || voiceCache.find(v=> v.lang && v.lang.toLowerCase().startsWith(base+'-'))
+      || voiceCache.find(v=> v.lang && v.lang.toLowerCase()===base)
+      || null;
+}
 function speak(text, lang){
-  if(!('speechSynthesis' in window)) return;
+  if(!('speechSynthesis' in window) || !text) return;
   const u = new SpeechSynthesisUtterance(text);
   u.lang = lang || 'ja-JP';
-  u.rate = 0.95;
+  const v = pickVoice(u.lang);
+  if(v){ u.voice = v; u.lang = v.lang; }
+  u.rate = 0.92;
   window.speechSynthesis.cancel();
   window.speechSynthesis.speak(u);
+  return !!v || u.lang.startsWith('ja');   // 声が見つかったか（案内用）
 }
 
 /* ============================================================
@@ -1238,9 +1266,13 @@ function cardHTML(item){
   }
   if(metas.length) html += `<div class="meta-row">${metas.join('')}</div>`;
 
-  // 翻訳枠
+  // 翻訳枠（＋その言語で読み上げるボタン）
   if(item.lang){
-    html += `<div class="translated" id="tl_${item.id}"><div class="tl-lang">${LANG_LABEL[item.lang]||item.lang}</div><div class="tl-text">${item.translated?esc(item.translated):'…'}</div></div>`;
+    const hasTr = !!item.translated;
+    html += `<div class="translated" id="tl_${item.id}">`
+         +  `<div class="tl-head"><span class="tl-lang">${LANG_LABEL[item.lang]||item.lang}</span>`
+         +  `<button class="tl-speak" data-tlspeak="${item.id}" data-tllang="${esc(item.lang)}" ${hasTr?'':'style="display:none"'}>🔊 読む</button></div>`
+         +  `<div class="tl-text">${hasTr?esc(item.translated):'…'}</div></div>`;
   }
 
   // 意図
@@ -1281,6 +1313,18 @@ function renderAll(){
 function wireCard(node){
   node.querySelectorAll('[data-say]').forEach(b=> b.addEventListener('click', ()=> speak(b.dataset.say,'ja-JP')));
   node.querySelectorAll('[data-read]').forEach(b=> b.addEventListener('click', ()=> speak(b.dataset.read,'ja-JP')));
+  // 翻訳文を、その言語の声で読み上げる
+  node.querySelectorAll('[data-tlspeak]').forEach(b=> b.addEventListener('click', ()=>{
+    const box = document.getElementById('tl_'+b.dataset.tlspeak);
+    const txt = box ? box.querySelector('.tl-text').textContent : '';
+    if(!txt || txt==='…' || txt.startsWith('（') || txt==='翻訳中…') return;
+    const spLang = LANG_SPEECH[b.dataset.tllang] || b.dataset.tllang;
+    const ok = speak(txt, spLang);
+    if(ok===false){                 // その言語の声が端末に無い
+      b.textContent = '🔊 声が未対応';
+      setTimeout(()=>{ b.textContent='🔊 読む'; }, 2200);
+    }
+  }));
   node.querySelectorAll('[data-del]').forEach(b=> b.addEventListener('click', ()=>{
     const id=b.dataset.del;
     history = history.filter(h=>h.id!==id);
