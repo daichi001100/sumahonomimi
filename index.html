@@ -261,7 +261,8 @@
         ・スマホを話す人の口に <b>近づけて</b> ください（30cmくらい）。<br>
         ・テレビや音楽は <b>小さく</b> してください。<br>
         ・<b>すこしゆっくり</b>、はっきり話すとよく当たります。<br>
-        ・iPhoneでうまく動かないときは、「抑揚で疑問判定」のチェックを外してみてください。
+        ・<b>iPhoneで何も出ないとき</b>は、<b>設定 → 一般 → キーボード → 音声入力</b> を「オン」にしてください。これがオフだと文字になりません。<br>
+        ・iPhoneでは「抑揚で疑問判定」は使いません（音声認識を優先するため）。質問かどうかは言葉づかいで見分けます。
       </div>
     </div>
   </div>
@@ -426,6 +427,22 @@ const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 let recognition = null;
 let listening = false;      // ユーザーが「きく」状態か
 let restarting = false;
+let lastRestart = 0;        // 連続再起動の暴走を防ぐ
+let heardSomething = false; // このセッションで一度でも音声を拾えたか
+let noResultTimer = null;   // 「何も拾えない」お知らせ用
+
+// iPhone / iPad かどうか（Safariはマイクを2つ同時に使えない）
+const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+  || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+// iPhone/iPadでは抑揚トラッキングを使わない（音声認識を最優先）。
+// 疑問形は言葉づかいから判定するので、トグルは切って説明を添える。
+if(IS_IOS){
+  tglIntonation.checked = false;
+  tglIntonation.disabled = true;
+  const lab = tglIntonation.closest('.switch');
+  if(lab){ lab.title = 'iPhoneでは音声認識を優先するため、抑揚判定は使いません（言葉づかいで質問を見分けます）'; lab.style.opacity = '.5'; }
+}
 
 if(!SR){
   supportNote.style.display='block';
@@ -440,6 +457,8 @@ if(!SR){
   recognition.maxAlternatives = 1;
 
   recognition.onresult = (e)=>{
+    heardSomething = true;
+    hideSupportNote();
     let interim = '';
     for(let i=e.resultIndex; i<e.results.length; i++){
       const res = e.results[i];
@@ -453,39 +472,76 @@ if(!SR){
     if(interim){ showLive(interim, true); }
   };
 
+  recognition.onspeechstart = ()=>{ heardSomething = true; hideSupportNote(); };
+
   recognition.onerror = (e)=>{
-    // no-speech / aborted は無視して継続。権限エラーなどは表示。
-    if(e.error === 'not-allowed' || e.error === 'service-not-allowed'){
-      supportNote.style.display='block';
-      supportNote.className='note unsupported';
-      supportNote.innerHTML='<b>マイクの使用が許可されていません。</b><br>ブラウザの設定でマイクを「許可」にしてください。';
+    const err = e.error;
+    if(err === 'not-allowed' || err === 'service-not-allowed'){
+      showSupportNote('<b>マイクが使えませんでした。</b><br>' + (IS_IOS
+        ? 'iPhoneの <b>設定 → Safari → マイク</b> と、<b>設定 → 一般 → キーボード → 音声入力（オン）</b> を確認してください。'
+        : 'ブラウザの設定でマイクを「許可」にしてください。'));
       stopListening();
+    }else if(err === 'audio-capture'){
+      // マイクが他に取られている（＝抑揚トラッキングと衝突）。マイクを離して認識だけで続行。
+      stopPitchTracking();
+      showSupportNote('マイクの取り合いが起きたため、<b>抑揚での判定を止めて</b>続けます。もう一度話してみてください。');
+    }else if(err === 'network'){
+      showSupportNote('<b>音声認識サーバーにつながりませんでした。</b><br>電波の良い場所で、もう一度お試しください。');
     }
+    // no-speech / aborted は正常な範囲なので無視（onendで再開）
   };
 
   recognition.onend = ()=>{
-    // iOS などは自動で止まるので、聞く状態なら再開する（擬似的な連続認識）
-    if(listening){
-      restarting = true;
-      try{ recognition.start(); }catch(_){ setTimeout(()=>{ try{ if(listening) recognition.start(); }catch(__){} }, 300); }
-    }
+    // iOS などは1文ごとに止まるので、聞く状態なら再開する（擬似的な連続認識）
+    if(!listening) return;
+    const now = Date.now();
+    const wait = (now - lastRestart < 500) ? 500 : 60;   // 暴走ループ防止
+    lastRestart = now;
+    setTimeout(()=>{
+      if(!listening) return;
+      try{ recognition.start(); }
+      catch(_){ setTimeout(()=>{ try{ if(listening) recognition.start(); }catch(__){} }, 400); }
+    }, wait);
   };
 }
+
+function showSupportNote(html){
+  supportNote.style.display='block';
+  supportNote.className='note unsupported';
+  supportNote.innerHTML = html;
+}
+function hideSupportNote(){ supportNote.style.display='none'; }
 
 function startListening(){
   if(!recognition) return;
   listening = true;
+  heardSomething = false;
+  lastRestart = Date.now();
+  hideSupportNote();
+  // 音声認識をユーザー操作の中で開始（iOSはこれが必須）
   try{ recognition.start(); }catch(_){}
-  startPitchTracking();
+  // iPhone/iPadは「マイク2つ同時」ができず認識が止まるので、抑揚トラッキングはしない。
+  // （疑問形は言葉づかいから判定します。）Androidなど他端末では従来どおり抑揚も使う。
+  if(!IS_IOS){ startPitchTracking(); }
   micBtn.classList.add('listening');
   micLabel.textContent = 'とめる（ストップ）';
   micBtn.querySelector('.ico').textContent = '⏸';
   statusEl.classList.add('on'); statusText.textContent='聞いています';
   liveHint.style.display='none'; liveText.style.display='block';
   showLive('…', false);
+  // しばらく何も拾えなければ、原因の見当を出してあげる
+  if(noResultTimer) clearTimeout(noResultTimer);
+  noResultTimer = setTimeout(()=>{
+    if(listening && !heardSomething){
+      showSupportNote('<b>まだ声を拾えていません。</b><br>' + (IS_IOS
+        ? 'スマホの口もとに近づけて話してみてください。それでもダメなときは、<b>設定 → 一般 → キーボード → 音声入力</b> が「オン」か確認してください。'
+        : 'マイクに近づいて、もう一度話してみてください。'));
+    }
+  }, 7000);
 }
 function stopListening(){
   listening = false;
+  if(noResultTimer){ clearTimeout(noResultTimer); noResultTimer=null; }
   if(recognition){ try{ recognition.stop(); }catch(_){} }
   stopPitchTracking();
   micBtn.classList.remove('listening');
@@ -513,6 +569,7 @@ let pitchSamples=[];   // { t: ms, f: Hz }
 const PITCH_MIN=70, PITCH_MAX=450;
 
 async function startPitchTracking(){
+  if(IS_IOS) return;               // iPhone/iPadでは音声認識を守るためマイクを二重に開かない
   if(!tglIntonation.checked) return;
   if(audioCtx) return;
   try{
